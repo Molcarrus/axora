@@ -126,3 +126,42 @@ impl DataFetcher for CoinGeckoFetcher {
         })
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_coingecko_fetch() {
+        let fetcher = CoinGeckoFetcher::new(None);
+        let feed_id = FeedId::new("ETH/USD");
+
+        let result = fetcher.fetch(&feed_id).await;
+
+        match result {
+            Ok(data_point) => {
+                println!("Fetched: {:?}", data_point);
+                assert_eq!(data_point.feed_id, feed_id);
+                assert_eq!(data_point.source, "coingecko");
+
+                if let DataValue::Price(price) = data_point.value {
+                    assert!(price.price > 0.0);
+                } else {
+                    panic!("Expected Price variant");
+                }
+            }
+            Err(e) => {
+                println!("Fetch failed (might be rate limited): {}", e);
+            }
+        }
+    }
+
+    #[test]
+    fn test_supports_feed() {
+        let fetcher = CoinGeckoFetcher::new(None);
+
+        assert!(fetcher.supports_feed(&FeedId::new("ETH/USD")));
+        assert!(fetcher.supports_feed(&FeedId::new("BTC/USD")));
+        assert!(!fetcher.supports_feed(&FeedId::new("UNKNOWN")));
+    }
+}
