@@ -1,2 +1,2 @@
-pub mod traits;
 pub mod coingecko;
+pub mod traits;
