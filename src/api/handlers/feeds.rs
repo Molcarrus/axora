@@ -5,7 +5,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    AppState, aggregation::engine::AggregationEngine, domain::data_point::VerifiedDataPoint
+    AppState, aggregation::engine::AggregationEngine, domain::data_point::VerifiedDataPoint,
 };
 use crate::{domain::data_point::FeedId, error::OracleError};
 
@@ -111,8 +111,8 @@ pub async fn force_update_feed(
     let raw_data = state.data_fetcher.fetch(&feed_id).await?;
 
     tracing::info!(
-        feed_id = %feed_id.0, 
-        source = raw_data.source, 
+        feed_id = %feed_id.0,
+        source = raw_data.source,
         "Fetched data successfully"
     );
 
@@ -123,7 +123,7 @@ pub async fn force_update_feed(
     state.feed_manager.update_feed(&verified)?;
 
     tracing::info!(
-        feed_id = %feed_id.0, 
+        feed_id = %feed_id.0,
         "Feed updated successfully"
     );
 
