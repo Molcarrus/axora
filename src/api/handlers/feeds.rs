@@ -5,7 +5,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    AppState, aggregation::engine::AggregationEngine, domain::data_point::VerifiedDataPoint, state,
+    AppState, aggregation::engine::AggregationEngine, domain::data_point::VerifiedDataPoint
 };
 use crate::{domain::data_point::FeedId, error::OracleError};
 
