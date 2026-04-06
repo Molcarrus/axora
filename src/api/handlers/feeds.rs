@@ -1,10 +1,12 @@
 use axum::{
     Json,
-    extract::{Path, State},
+    extract::{Path, Query, State},
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-use crate::AppState;
+use crate::{
+    AppState, aggregation::engine::AggregationEngine, domain::data_point::VerifiedDataPoint, state,
+};
 use crate::{domain::data_point::FeedId, error::OracleError};
 
 #[derive(Serialize)]
@@ -66,4 +68,64 @@ pub async fn get_feed(
     };
 
     Ok(Json(response))
+}
+
+#[derive(Deserialize)]
+pub struct HistoryQuery {
+    #[serde(default = "default_limit")]
+    pub limit: i64,
+}
+
+fn default_limit() -> i64 {
+    100
+}
+
+pub async fn get_feed_history(
+    State(state): State<AppState>,
+    Path(feed_id): Path<String>,
+    Query(query): Query<HistoryQuery>,
+) -> Result<Json<Vec<VerifiedDataPoint>>, OracleError> {
+    let feed_id = FeedId::new(feed_id);
+    let limit = query.limit.min(1000);
+
+    let history = state.storage.get_history(&feed_id, limit).await?;
+
+    Ok(Json(history))
+}
+
+pub async fn force_update_feed(
+    State(state): State<AppState>,
+    Path(feed_id): Path<String>,
+) -> Result<Json<VerifiedDataPoint>, OracleError> {
+    let feed_id = FeedId::new(feed_id);
+
+    let _ = state.feed_manager.get_feed(&feed_id)?;
+
+    if !state.data_fetcher.supports_feed(&feed_id) {
+        return Err(OracleError::BadRequest(format!(
+            "Feed {} not supported by data source",
+            feed_id.0
+        )));
+    }
+
+    let raw_data = state.data_fetcher.fetch(&feed_id).await?;
+
+    tracing::info!(
+        feed_id = %feed_id.0, 
+        source = raw_data.source, 
+        "Fetched data successfully"
+    );
+
+    let verified = AggregationEngine::aggregate_simple(raw_data)?;
+
+    state.storage.store_data_point(&verified).await?;
+
+    state.feed_manager.update_feed(&verified)?;
+
+    tracing::info!(
+        feed_id = %feed_id.0, 
+        "Feed updated successfully"
+    );
+
+    Ok(Json(verified))
 }
