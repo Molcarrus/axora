@@ -1,0 +1,11 @@
+[server]
+host = "127.0.0.1"
+port = 8080
+request_timeout_secs = 30
+
+[database]
+url = "postgresql://orcale:oracle@localhost:5432/oracle_db"
+max_connections = 5
+
+[source]
+coingecko_api_key = ""
