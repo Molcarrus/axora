@@ -4,7 +4,7 @@ use serde::Deserialize;
 pub struct AppConfig {
     pub server: ServerConfig,
     pub database: DatabaseConfig,
-    pub sources: SourcesConfig
+    pub sources: SourcesConfig,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -22,13 +22,13 @@ pub struct DatabaseConfig {
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct SourcesConfig {
-    pub coingecko_api_key: Option<String>
+    pub coingecko_api_key: Option<String>,
 }
 
 impl AppConfig {
     pub fn load() -> anyhow::Result<Self> {
         dotenvy::dotenv().ok();
-        
+
         let config = config::Config::builder()
             .add_source(config::File::with_name("config/default"))
             .add_source(
@@ -37,7 +37,7 @@ impl AppConfig {
                     .try_parsing(true),
             )
             .build()?;
-        
+
         Ok(config.try_deserialize()?)
     }
 }

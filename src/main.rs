@@ -1,10 +1,11 @@
 mod aggregation;
+mod api;
+mod config;
 mod domain;
 mod error;
 mod sources;
-mod storage;
 mod state;
-mod config;
+mod storage;
 
 fn main() {
     println!("Hello, world!");
